@@ -4,6 +4,7 @@ import dash_bootstrap_components as dbc
 import random
 import pandas as pd
 import pathlib
+import openpyxl
 
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 server = app.server
