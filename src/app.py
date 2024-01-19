@@ -48,12 +48,12 @@ card_main = dbc.Card(
     color="danger",
     # inverse = True,
     outline=True,
-    style={"width": "400px"}
+    style={"width": "100%", "max-width": "800px", "margin": "auto"}
 )
 
 app.layout = dbc.Container([
     dbc.Row([
-        dbc.Col(card_main, width={'size': 100, 'offset': 1}),
+        dbc.Col(card_main, width={'size': 12}),
     ], justify='around', align='center'),
     dcc.Store(id="didfthe-stored", data=[]),
     dcc.Store(id="diordenadatoday-stored", data=[]),
@@ -117,4 +117,4 @@ def displayClick2(btn2, diordenadatoday):
     return html.Div(msg)
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server(debug=True,port =871)
