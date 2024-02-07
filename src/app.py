@@ -6,6 +6,7 @@ import pandas as pd
 import pathlib
 import openpyxl
 
+
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 server = app.server
 def get_pandas_data(dfordenada: str) -> pd.DataFrame:
@@ -48,7 +49,7 @@ card_main = dbc.Card(
     color="danger",
     # inverse = True,
     outline=True,
-    style={"width": "100%", "max-width": "800px", "margin": "auto"}
+    style={"width": "100%", "max-width": "1200px", "margin": "auto"}
 )
 
 app.layout = dbc.Container([
@@ -58,8 +59,9 @@ app.layout = dbc.Container([
     dcc.Store(id="didfthe-stored", data=[]),
     dcc.Store(id="diordenadatoday-stored", data=[]),
 ],
-    style={"width": "18rem"},
-    fluid=False)
+    style={"width": "22rem"},
+    fluid=False
+)
 
 
 @app.callback(
