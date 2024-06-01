@@ -1,5 +1,5 @@
 from dash import html, dcc
-from dash import Dash, Input, Output, State, callback_context
+from dash import Dash, Input, Output, State, callback_context,no_update
 import dash_bootstrap_components as dbc
 import random
 import pandas as pd
@@ -29,8 +29,8 @@ loptions = [{'label': str(option), 'value': option} for option in lcol]
 card_warm = dbc.Card(
     [
         html.H6(
-            [html.I(className="fas fa-running fa-3x"), ' ',
-              'TRANSLATION WARM-UP',html.I(className="fas fa-running fa-3x")],
+            [html.I(className="fas fa-running fa-3x",style={'color': 'grey'}), ' ',
+              'TRANSLATION WARM-UP    .',html.I(className="fas fa-running fa-3x",style={'color': 'grey'})],
             className="class-subtitle"
         ),
                 dbc.CardBody(
@@ -53,7 +53,7 @@ card_warm = dbc.Card(
     color="danger",
     # inverse = True,
     outline=True,
-    style={"width": "100%", "max-width": "1200px", "margin": "auto"}
+    style={"width": "100%", "max-width": "1200px", "margin": "auto","padding": "10px"}
 )
 # data for the translation warm up card
 dfreport = dithe['reportedsp']
@@ -64,13 +64,14 @@ loptionsrep = [{'label': str(option), 'value': option} for option in lcolrep]
 card_rep = dbc.Card(
     [
         html.H6(
-            [html.I(className="fas fa-comments fa-3x"), ' ',
-              'REPORTED SPEECH',html.I(className="fas fa-comments fa-3x")],
+            [html.I(className="fas fa-comments fa-3x",style={'color': 'grey'}),
+             ' ',
+            'REPORTED SPEECH     .',
+            html.I(className="fas fa-comments fa-3x",style={'color': 'grey'})],
             className="class-subtitle"
         ),
         dbc.CardBody(
             [
-
                 html.H4('CHOOSE A STORY', className="class-subtitle"),
                 dcc.Dropdown(loptionsrep, value='karl and Ana', id='mydroprep'),
                 html.Div(id='container-button-timestamp0rep'),
@@ -88,8 +89,40 @@ card_rep = dbc.Card(
     color="danger",
     # inverse = True,
     outline=True,
-    style={"width": "100%", "max-width": "1200px", "margin": "auto"}
+    style={"width": "100%", "max-width": "1200px", "margin": "auto","padding": "10px"}
 )
+
+# data for the pictures
+dfpic = dithe['pictures']
+didfpic = dfpic.to_dict('records')
+
+# card for the pictures
+card_pic = dbc.Card(
+    [
+        html.H6(
+            [html.I(className="fas fa-camera fa-3x",style={'color': 'grey'}), ' ',
+              'DESCRIBE THE PICTURES',html.I(className="fas fa-camera fa-3x",style={'color': 'grey'})],
+            className="class-subtitle"
+        ),
+        dbc.CardBody(
+            [
+                html.P('click button', className="card-text mt-2"),
+                dbc.Button('PICTURE', id='btn-nclickspic-1', n_clicks=0,
+                           color="info", className="me-1"),
+                html.Div(id='container-button-timestamppic'),
+                dbc.Button('DESCRIPTION', id='btn-nclickspic-2', n_clicks=0,
+                           color="primary", className="me-1"),
+                html.Div(id='container-button-timestamp2pic'),
+            ],
+            # className="d-flex flex-column justify-content-center align-items-center",  # Center the card body content
+        )
+    ],
+    color="danger",
+    # inverse = True,
+    outline=True,
+    style={"width": "100%", "max-width": "1200px", "margin": "auto","padding": "10px"}
+)
+
 
 app.layout = dbc.Container([
     dbc.Row([
@@ -100,11 +133,18 @@ app.layout = dbc.Container([
         dbc.Col(card_rep, width={'size': 6})
 
     ], justify='around', align='center'),
+    dbc.Row([
+        dbc.Col(card_pic, width={'size': 6}),
+
+    ], justify='around', align='center'),
     dcc.Store(id="didfthe-stored", data=[]),
     dcc.Store(id="diordenadatoday-stored", data=[]),
     dcc.Store(id="didfreport-stored", data=[]),
     dcc.Store(id="diordenadarep-stored", data=[]),
-    dcc.Store(id="dirow", data=[])
+    dcc.Store(id="diordenadatodaypic-stored", data=[]),
+    dcc.Store(id="didfpic", data=didfpic),
+    dcc.Store(id="dirow", data=[]),
+
 ],
     # style={"width": "22rem"},
     fluid=False
@@ -131,39 +171,36 @@ def update_output(selected_options):
 
 @app.callback(
     [Output('container-button-timestamp', 'children'),
-     Output('diordenadatoday-stored', 'data')],
-    [Input('btn-nclicks-1', 'n_clicks')],
-    [State("didfthe-stored", 'data')],
+     Output('diordenadatoday-stored', 'data'),
+     Output('container-button-timestamp2', 'children')],
+    [Input('btn-nclicks-1', 'n_clicks'),
+     Input('btn-nclicks-2', 'n_clicks')],
+    [State("didfthe-stored", 'data'),
+     State('diordenadatoday-stored', 'data')],
     prevent_initial_call=True
 )
-def displayClick(btn1, didfthe):
-    msg = "pulsa boton para una frase"
+def display_sentence(btn1, btn2, didfthe, diordenadatoday):
+    ctx = callback_context
+    if not ctx.triggered:
+        return html.Div(), [], ""
 
-    if "btn-nclicks-1" in callback_context.triggered_id:
+    button_id = ctx.triggered[0]['prop_id'].split('.')[0]
+
+    if button_id == "btn-nclicks-1":
         dfthe = pd.DataFrame(didfthe)
-        lindex = list(dfthe.index)
-        randomn = random.choice(lindex)
+        randomn = random.choice(list(dfthe.index))
         row = dfthe.iloc[[randomn]]
         esp = row.loc[:, 'esp']
         msg = esp
         diordenadatoday = row.to_dict('records')
-        return html.Div(msg), diordenadatoday
+        return html.Div(msg), diordenadatoday, ""
 
-
-@app.callback(
-    Output('container-button-timestamp2', 'children'),
-    [Input('btn-nclicks-2', 'n_clicks')],
-    [State('diordenadatoday-stored', 'data')],
-    prevent_initial_call=True
-)
-def displayClick2(btn2, diordenadatoday):
-    msg = "pulsa boton para obtener solución"
-    if "btn-nclicks-2" in callback_context.triggered_id:
+    elif button_id == "btn-nclicks-2":
         row = pd.DataFrame(diordenadatoday)
         eng = row.loc[:, 'eng']
-        msg = eng
+        return no_update, diordenadatoday, html.Div(eng)
 
-    return html.Div(msg)
+    return html.Div(), [], ""
 
 # callbacks for the reported speech
 @app.callback(
@@ -213,7 +250,7 @@ def displayClick(btn1, didfreport,diordenadarep):
         print(last_index)
         row = dfreport.iloc[[last_index]]
         dirow = row.to_dict('records')
-        print(dirow)
+
         return html.Div(msg), diordenadarep, dirow
 
 
@@ -231,6 +268,40 @@ def displayClick2(btn2, dirow):
         msg = reported
 
     return html.Div(msg)
+# callback for the pictures
+@app.callback(
+    [Output('container-button-timestamppic', 'children'),
+    Output('diordenadatodaypic-stored', 'data'),
+     Output('container-button-timestamp2pic', 'children')],
+    [Input('btn-nclickspic-1', 'n_clicks'),
+     Input('btn-nclickspic-2', 'n_clicks')],
+    [State("didfpic", 'data')],
+    [State("diordenadatodaypic-stored", 'data')],
+    prevent_initial_call=True
+)
+def display_sentence(btn1, btn2, didfpic,diordenadatodaypic):
+    ctx = callback_context
+    if not ctx.triggered:
+        return html.Div(), [], ""
+
+    button_id = ctx.triggered[0]['prop_id'].split('.')[0]
+
+    if button_id == "btn-nclickspic-1":
+        dfpic = pd.DataFrame(didfpic)
+        randomn = random.choice(list(dfpic.index))
+        row = dfpic.iloc[[randomn]]
+        pic = list(row.loc[:, 'name'])[0]
+        msg = pic
+        diordenadatodaypic = row.to_dict('records')
+        return html.Img(src="/assets/{}".format(msg), style={'width': '20%', 'max-width': '600px', 'margin': 'auto'}), diordenadatodaypic, ""
+
+    elif button_id == "btn-nclickspic-2":
+        row = pd.DataFrame(diordenadatodaypic)
+        eng = row.loc[:, 'eng']
+        return no_update, diordenadatodaypic, html.Div(eng)
+
+    return html.Div(), [], ""
+
 
 
 if __name__ == '__main__':
