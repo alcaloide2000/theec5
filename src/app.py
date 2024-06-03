@@ -9,6 +9,7 @@ import openpyxl
 
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP,"https://use.fontawesome.com/releases/v5.15.4/css/all.css"])
 server = app.server
+app.title = "theec practice"
 
 # fubtion to get data
 def get_pandas_data(dfordenada: str) -> pd.DataFrame:
@@ -55,12 +56,12 @@ card_warm = dbc.Card(
     outline=True,
     style={"width": "100%", "max-width": "1200px", "margin": "auto","padding": "10px"}
 )
-# data for the translation warm up card
+# data for the reported speech
 dfreport = dithe['reportedsp']
 lindexrep = list(dfreport.index)
 lcolrep = dfreport['story'].unique()
 loptionsrep = [{'label': str(option), 'value': option} for option in lcolrep]
-# card for the warm up
+# card for the reported
 card_rep = dbc.Card(
     [
         html.H6(
@@ -106,6 +107,8 @@ card_pic = dbc.Card(
         ),
         dbc.CardBody(
             [
+                html.H4(' CHOOSE A PICTURE', className="card-title"),
+
                 html.P('click button', className="card-text mt-2"),
                 dbc.Button('PICTURE', id='btn-nclickspic-1', n_clicks=0,
                            color="info", className="me-1"),
@@ -113,6 +116,41 @@ card_pic = dbc.Card(
                 dbc.Button('DESCRIPTION', id='btn-nclickspic-2', n_clicks=0,
                            color="primary", className="me-1"),
                 html.Div(id='container-button-timestamp2pic'),
+            ],
+            # className="d-flex flex-column justify-content-center align-items-center",  # Center the card body content
+        )
+    ],
+    color="danger",
+    # inverse = True,
+    outline=True,
+    style={"width": "100%", "max-width": "1200px", "margin": "auto","padding": "10px"}
+)
+# data for the interrogative chalenge
+dfinter = dithe['question']
+lindexinter = list(dfinter.index)
+lcolinter = dfinter['word'].unique()
+loptionsinter = [{'label': str(option), 'value': option} for option in lcolinter]
+# card for interrogative
+card_inter = dbc.Card(
+    [
+        html.H6(
+            [html.I(className="fas fa-question fa-3x",style={'color': 'grey'}), ' ',
+              'INTERROGATIVE CHALENGE    .',html.I(className="fas fa-question fa-3x",style={'color': 'grey'})],
+            className="class-subtitle"
+        ),
+                dbc.CardBody(
+            [
+                html.H4(' CHOOSE A QUESTION WORD', className="card-title"),
+
+                dcc.Dropdown(loptionsinter, value='all', id='mydropinter'),
+                html.Div(id='container-button-timestamp0inter'),
+                html.P('click button', className="card-text mt-2"),
+                dbc.Button('ANSWER', id='btn-nclicksinter-1', n_clicks=0,
+                           color="info", className="me-1"),
+                html.Div(id='container-button-timestampinter'),
+                dbc.Button('QUESTION', id='btn-nclicksinter-2', n_clicks=0,
+                           color="primary", className="me-1"),
+                html.Div(id='container-button-timestamp2inter'),
             ],
             # className="d-flex flex-column justify-content-center align-items-center",  # Center the card body content
         )
@@ -134,6 +172,7 @@ app.layout = dbc.Container([
 
     ], justify='around', align='center'),
     dbc.Row([
+        dbc.Col(card_inter, width={'size': 6}),
         dbc.Col(card_pic, width={'size': 6}),
 
     ], justify='around', align='center'),
@@ -143,6 +182,8 @@ app.layout = dbc.Container([
     dcc.Store(id="diordenadarep-stored", data=[]),
     dcc.Store(id="diordenadatodaypic-stored", data=[]),
     dcc.Store(id="didfpic", data=didfpic),
+    dcc.Store(id="didfinter-stored", data=[]),
+    dcc.Store(id="diordenadatodayinter-stored", data=[]),
     dcc.Store(id="dirow", data=[]),
 
 ],
@@ -268,6 +309,61 @@ def displayClick2(btn2, dirow):
         msg = reported
 
     return html.Div(msg)
+
+# callbacks for the interrogative
+@app.callback(
+    [Output('container-button-timestamp0inter', 'children'),
+     Output("didfinter-stored", 'data')],
+    [Input('mydropinter', 'value')],
+    # prevent_initial_call=True
+)
+def update_output(selected_options):
+    if 'all' in selected_options:
+        msg = 'You have selected: All option'
+        didfinter = dfinter.to_dict('records')
+        return html.Div(msg), didfinter
+    else:
+        msg = f'You have selected: {selected_options}'
+        dffiltrada = dfinter.loc[dfinter['word'] == selected_options]
+        didfinter = dffiltrada.to_dict('records')
+        return html.Div(msg), didfinter
+
+
+@app.callback(
+    [Output('container-button-timestampinter', 'children'),
+     Output('diordenadatodayinter-stored', 'data'),
+     Output('container-button-timestamp2inter', 'children')],
+    [Input('btn-nclicksinter-1', 'n_clicks'),
+     Input('btn-nclicksinter-2', 'n_clicks')],
+    [State("didfinter-stored", 'data'),
+     State('diordenadatodayinter-stored', 'data')],
+    prevent_initial_call=True
+)
+def display_sentence(btn1, btn2, didfinter, diordenadatodayinter):
+    ctx = callback_context
+    if not ctx.triggered:
+        return html.Div(), [], ""
+
+    button_id = ctx.triggered[0]['prop_id'].split('.')[0]
+
+    if button_id == "btn-nclicksinter-1":
+        dfinter = pd.DataFrame(didfinter)
+        randomn = random.choice(list(dfinter.index))
+        row = dfinter.iloc[[randomn]]
+        ans = row.loc[:, 'answer']
+        msg = ans
+        diordenadatodayinter = row.to_dict('records')
+        return html.Div(msg), diordenadatodayinter, ""
+
+    elif button_id == "btn-nclicksinter-2":
+        row = pd.DataFrame(diordenadatodayinter)
+        que = row.loc[:, 'question']
+        return no_update, diordenadatodayinter, html.Div(que)
+
+    return html.Div(), [], ""
+
+
+
 # callback for the pictures
 @app.callback(
     [Output('container-button-timestamppic', 'children'),
